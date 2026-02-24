@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lily Pad Leap: Turbo Edition</title>
+    <style>
+        :root { --water: #1e88e5; --jungle: #2d5a27; --danger: #ff5252; }
+        body { 
+            font-family: 'Comic Sans MS', cursive; 
+            background: var(--jungle); 
+            display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; 
+        }
+        #game-card { 
+            background: rgba(255, 255, 255, 0.95); padding: 30px; border-radius: 25px; 
+            box-shadow: 0 20px 0 #1b3d18; text-align: center; width: 600px; border: 5px solid #8bc34a;
+        }
+        .pond-area { 
+            background: var(--water); height: 180px; border-radius: 90px; 
+            display: flex; align-items: center; justify-content: space-around; 
+            margin: 20px 0; position: relative; border: 8px solid #0d47a1;
+        }
+        /* Timer Bar Styles */
+        #timer-container { width: 100%; height: 20px; background: #ddd; border-radius: 10px; margin-bottom: 10px; overflow: hidden; }
+        #timer-bar { width: 100%; height: 100%; background: #4caf50; transition: width 0.1s linear; }
+
+        @keyframes hop {
+            0% { bottom: 35%; transform: scale(1); }
+            50% { bottom: 70%; transform: scale(1.2); }
+            100% { bottom: 35%; transform: scale(1); }
+        }
+        .animal { position: absolute; font-size: 3.5rem; bottom: 35%; left: 5%; z-index: 10; transition: left 0.5s; }
+        .hopping { animation: hop 0.5s ease-in-out; }
+        .lilypad { font-size: 3rem; }
+        button { 
+            background: #4caf50; color: white; border: none; padding: 12px 25px; 
+            border-radius: 50px; cursor: pointer; font-size: 1.1rem; font-weight: bold;
+            box-shadow: 0 4px 0 #2e7d32;
+        }
+        input { padding: 10px; border-radius: 10px; border: 2px solid #ccc; width: 120px; text-align: center; font-size: 1.2rem; }
+    </style>
+</head>
+<body>
+
+<div id="game-card">
+    <div id="menu">
+        <h1>🌿 Lily Pad Leap 🌿</h1>
+        <p>Answer before the bar runs out!</p>
+        <button onclick="setupGame('easy')">Easy</button>
+        <button onclick="setupGame('med')">Medium</button>
+        <button onclick="setupGame('hard')">Hard</button>
+    </div>
+
+    <div id="gameplay" style="display:none;">
+        <div id="timer-container"><div id="timer-bar"></div></div>
+        <div class="pond-area">
+            <div id="player" class="animal">🐸</div>
+            <span class="lilypad">🪷</span><span class="lilypad">🪷</span>
+            <span class="lilypad">🪷</span><span class="lilypad">🪷</span>
+            <span class="lilypad">🐊</span>
+        </div>
+        <h2 id="question">Question</h2>
+        <input type="text" id="answer" autocomplete="off">
+        <button onclick="checkAnswer()">JUMP!</button>
+    </div>
+</div>
+
+<script>
+    let currentLevel = 0;
+    let correctAnswer;
+    let timerInterval;
+    let timeLeft;
+    const maxTime = 100; // 10 seconds (100 * 100ms)
+
+    function setupGame(m) {
+        mode = m;
+        currentLevel = 0;
+        document.getElementById('menu').style.display = 'none';
+        document.getElementById('gameplay').style.display = 'block';
+        nextQuestion();
+    }
+
+    function startTimer() {
+        clearInterval(timerInterval);
+        timeLeft = maxTime;
+        const bar = document.getElementById('timer-bar');
+        
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            bar.style.width = timeLeft + "%";
+            
+            // Change color to red when low
+            if(timeLeft < 30) bar.style.backgroundColor = "var(--danger)";
+            else bar.style.backgroundColor = "#4caf50";
+
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                gameOver("Too slow! The crocodile caught up!");
+            }
+        }, 100); // Updates every 100ms
+    }
+
+    function nextQuestion() {
+        let a = Math.floor(Math.random() * 10) + 2;
+        let b = Math.floor(Math.random() * 10) + 2;
+        
+        if(mode === 'easy') {
+            correctAnswer = a + b;
+            document.getElementById('question').innerText = `${a} + ${b} = ?`;
+        } else if(mode === 'med') {
+            correctAnswer = a * b;
+            document.getElementById('question').innerText = `${a} × ${b} = ?`;
+        } else {
+            let res = Math.random() > 0.5;
+            let fake = res ? a : a + 1;
+            document.getElementById('question').innerText = `Is ${a} == ${fake}? (t/f)`;
+            correctAnswer = (a == fake) ? "t" : "f";
+        }
+
+        document.getElementById('answer').value = '';
+        document.getElementById('answer').focus();
+        startTimer();
+    }
+
+    function checkAnswer() {
+        const userAns = document.getElementById('answer').value.trim().toLowerCase();
+        const player = document.getElementById('player');
+        
+        if (userAns == correctAnswer.toString()) {
+            currentLevel++;
+            player.classList.add('hopping');
+            player.style.left = (currentLevel * 20) + 5 + "%";
+            
+            setTimeout(() => player.classList.remove('hopping'), 500);
+
+            if (currentLevel >= 4) {
+                clearInterval(timerInterval);
+                alert("🏆 Victory! You survived!");
+                location.reload();
+            } else {
+                nextQuestion();
+            }
+        } else {
+            gameOver("Wrong answer! SPLASH!");
+        }
+    }
+
+    function gameOver(msg) {
+        clearInterval(timerInterval);
+        alert(msg);
+        location.reload();
+    }
+</script>
+</body>
+</html>
